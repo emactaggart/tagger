@@ -1,0 +1,4 @@
+__pycache__
+.dir-locals.el
+/.venv/
+/tests/resources/output

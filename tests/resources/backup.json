@@ -1,0 +1,11 @@
+[
+    {
+        "_filename": "/home/evan/Development/tagger/tests/resources/test.mp3",
+        "filename": "test.mp3",
+        "comment": "@comment",
+        "genre": "#genre",
+        "album": "album",
+        "artist": "artist",
+        "title": "title"
+    }
+]

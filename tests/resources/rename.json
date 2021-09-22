@@ -1,0 +1,11 @@
+[
+    {
+        "_filename": "/home/evan/Development/tagger/tests/resources/test_rename.mp3",
+        "filename": "flavour-town.mp3",
+        "comment": "@comment",
+        "genre": "#genre",
+        "album": "album",
+        "artist": "artist",
+        "title": "title"
+    }
+]
