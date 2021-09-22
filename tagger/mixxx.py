@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from tagger.utils import absolute_path
 
 
 def tags_from_library(database_filename):
@@ -58,7 +59,7 @@ join track_locations tl on tl.id = l.location
 
 
 def _query_db(db, query, *args):
-    with sqlite3.connect(db) as conn:
+    with sqlite3.connect(absolute_path(db)) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute(query, *args)

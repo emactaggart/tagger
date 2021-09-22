@@ -7,7 +7,7 @@ from tagger import cmd
 from tagger.core import AUDIO_FILE_METADATA_FIELDS, EasyFileUtils, MetaDataTagUtils
 from tagger.utils import drop_keys
 
-from tagger_cli import main
+from tagger.tagger_cli import main
 
 json_filename = "tests/resources/backup.json"
 mp3_filename = "tests/resources/test.mp3"
@@ -24,11 +24,11 @@ def get_mp3_fullname(filename):
 
 
 def reset_tags(audio_filename):
-    tags = EasyFileUtils.read_tags_from_filenames(audio_filename)
+    tags = EasyFileUtils.read_tags_from_existing(audio_filename)
     MetaDataTagUtils.clear_all_specified_metadata(tags, AUDIO_FILE_METADATA_FIELDS)
     MetaDataTagUtils.add_metadata_tags(tags, "xxx", AUDIO_FILE_METADATA_FIELDS)
     EasyFileUtils.write_tags_to_files(tags)
-    new_tags = EasyFileUtils.read_tags_from_filenames([audio_filename])
+    new_tags = EasyFileUtils.read_tags_from_existing([audio_filename])
     assert new_tags == [
         {
             "filename": "test.mp3",
@@ -60,6 +60,10 @@ def reset_rename():
     shutil.copy(mp3_filename, mp3_rename_before_filename)
 
 
+# TODO
+# - failed and missing files
+# - multiple tags
+
 class CmdTests(TestCase):
     def test_restore_metadata_tags_from_backup__is_successful(self):
         """
@@ -70,7 +74,7 @@ class CmdTests(TestCase):
         )  # Ensure test audio file is in an expected state
 
         cmd.restore_metadata_tags_from_backup(json_filename)
-        result = EasyFileUtils.read_tags_from_filenames([mp3_filename])
+        result = EasyFileUtils.read_tags_from_existing([mp3_filename])
         assert drop_keys(result, "_filename") == [
             {
                 "filename": "test.mp3",
@@ -124,7 +128,7 @@ class CmdTests(TestCase):
     def test_rename_files(self):
         reset_rename()
         cmd.apply_renaming_to_files(rename_json_filename)
-        results = EasyFileUtils.read_tags_from_filenames(mp3_rename_after_filename)
+        results = EasyFileUtils.read_tags_from_existing(mp3_rename_after_filename)
         assert results == [
             {
                 "filename": "flavour-town.mp3",
@@ -157,7 +161,7 @@ class ClickCliTests(TestCase):
         results = runner.invoke(main, ["apply", "--json-file", json_filename])
         assert results.exit_code == 0
 
-        result = EasyFileUtils.read_tags_from_filenames([mp3_filename])
+        result = EasyFileUtils.read_tags_from_existing([mp3_filename])
         assert drop_keys(result, "_filename") == [
             {
                 "filename": "test.mp3",
@@ -243,7 +247,7 @@ class ClickCliTests(TestCase):
         results = runner.invoke(main, ["rename", "--json-file", rename_json_filename])
         assert results.exit_code == 0
 
-        results = EasyFileUtils.read_tags_from_filenames(mp3_rename_after_filename)
+        results = EasyFileUtils.read_tags_from_existing(mp3_rename_after_filename)
         assert results == [
             {
                 "filename": "flavour-town.mp3",

@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='tagger',
@@ -10,5 +10,8 @@ setup(
     author_email='evan.mactaggart@gmail.com',
     install_requires=['mutagen', 'click'],
     keywords=['id3', 'mp3', 'm4a', 'flac', 'audio', 'tags', 'metadata'],
-    url=''
+    url='https://github.com/emactaggart/tagger',
+    entry_points={
+        'console_scripts':['tagger=tagger:start']
+    }
 )

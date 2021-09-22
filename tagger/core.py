@@ -5,7 +5,7 @@ from datetime import datetime
 from mutagen import flac, mp4
 from mutagen.easyid3 import EasyID3
 from mutagen.easymp4 import EasyMP4
-from tagger.utils import first, keep_keys
+from tagger.utils import absolute_path, first, keep_keys
 
 ##### vars & config
 
@@ -84,10 +84,10 @@ do_setup()
 
 class EasyFileUtils:
     """
-    Regarding easy_dicts: basically a dict containing a file's metadata which
+    Regarding metadata_tags: basically a dict containing a file's metadata which
     can be passed around, molded, and stored easier than file handlers directly
     ex.
-    easy_dicts = [
+    metadata_tags = [
         {
             "filename": "song.mp3",
             "_filename": "/home/username/Music/song.mp3",
@@ -102,48 +102,68 @@ class EasyFileUtils:
     ]
     """
 
-    @classmethod
-    def read_tags_from_filenames(cls, filenames):
+    @staticmethod
+    def read_tags_from_existing(filenames):
+        metadata_tags, _, _ = EasyFileUtils.read_tags_from_filenames(filenames)
+        return metadata_tags
+
+    @staticmethod
+    def read_tags_from_filenames(filenames):
         """
         Given a list of filenames, read each file and generate an EasyDict from their metadata tags.
-
         FIXME
-        - performance; memory?
-        - failsafe, when files do not exist, loud=True?
+        - performance; memory? Are these files even closed properly?
         """
         if isinstance(filenames, str):
             filenames = [filenames]
-        filenames = [os.path.realpath(os.path.expanduser(fn)) for fn in filenames]
-        easy_files = [cls._open_mp3_or_mp4_or_flac(fn) for fn in filenames]
-        easy_dicts = [cls._easy_file_to_dict(ef) for ef in easy_files]
-        return easy_dicts
+        filenames = [absolute_path(name) for name in filenames]
+        easy_files = []
+        failed = []
+        missing = []
+        for name in filenames:
+            try:
+                file = EasyFileUtils._open_mp3_or_mp4_or_flac(name)
+                easy_files.append(file)
+            except TypeError:
+                failed.append(name)
+            except FileNotFoundError:
+                missing.append(name)
+        metadata_tags = [EasyFileUtils._easy_file_to_dict(ef) for ef in easy_files]
+        return metadata_tags, failed, missing
 
     @staticmethod
-    def write_tags_to_files(easy_dicts):
+    def write_tags_to_files(metadata_tags):
         """
         Given a list of modified EasyDicts, write metadata fields to corresponding audio files (via easy_dict['_filename'])
         FIXME
         - performance, minimize number of writes? avoid writing timestamps?
         - Fail safe,  when files do not exist, loud=True?
         - improve logging vs printing
+        - optimize by diffing real tags and updated tags, writing only those that have changed
         """
-        easy_files = [EasyFileUtils._dict_to_easy_file(d) for d in easy_dicts]
-        print("Writing tags to %s files." % len(easy_files))
+        easy_files, failed, missing = EasyFileUtils._dicts_to_easy_files(metadata_tags)
+        if failed:
+            print("Failed", failed)
+        if missing:
+            print("Missing: ", missing)
+        print("...Writing tags to %s files..." % len(easy_files))
         for i, e in enumerate(easy_files):
             if i % 100 == 0:
-                print(i)
+                print("%s of %s..." %(i, len(easy_files)))
             e.save()
         print("DINNERS READY")
 
     @staticmethod
-    def rename_files(easy_dicts):
+    def rename_files(metadata_tags):
         """
         FIXME
         - performance
         - Fail safe
         """
         renamed = [
-            d for d in easy_dicts if os.path.basename(d["_filename"]) != d["filename"]
+            d
+            for d in metadata_tags
+            if os.path.basename(d["_filename"]) != d["filename"]
         ]
 
         for r in renamed:
@@ -153,23 +173,43 @@ class EasyFileUtils:
             os.rename(previous_absolute, previous_dir + new_filename)
 
     @staticmethod
-    def export_tags_to_file(output_directory, metadata_tags):
+    def export_tags_to_file(
+        output_directory, metadata_tags, failed=None, missing=None, filename_prefix=""
+    ):
         """
         NOTE: This will remove unrelated/unwanted information from `metadata_tags`.
         """
-        tag_backup_filename = "track-tags-backup-%s.json" % datetime.now().strftime(
-            "%Y-%m-%dT%H-%M"
-        )
-        json_filename = os.path.join(output_directory, tag_backup_filename)
+        timestamp_str = datetime.now().strftime("%Y-%m-%dT%H-%M")
         metadata_tags = MetaDataTagUtils.remove_unnecessary_tags(metadata_tags)
-        EasyFileUtils.write_json_file(json_filename, metadata_tags)
+        if metadata_tags:
+            tags_filename = os.path.join(
+                output_directory,
+                "%s-tags-%s.json" % (filename_prefix, timestamp_str)
+                if filename_prefix
+                else "export-tags-%s.json" % timestamp_str,
+            )
+            EasyFileUtils.write_json_file(tags_filename, metadata_tags)
+        if not failed:
+            failed = []
+        if not missing:
+            missing = []
+        if failed or missing:
+            errors_filename = os.path.join(
+                output_directory,
+                "%s-errors-%s.json" % (filename_prefix, timestamp_str)
+                if filename_prefix
+                else "export-errors-%s.json" % timestamp_str,
+            )
+            EasyFileUtils.write_json_file(
+                errors_filename, {"failed": failed, "missing": missing}
+            )
 
     @staticmethod
     def read_json_file(json_filename):
         """
         Given a json file, open and return it's parsed contents.
         """
-        with open(json_filename, "r") as json_file:
+        with open(absolute_path(json_filename), "r") as json_file:
             file_contents = json_file.read()
         json_content = json.loads(file_contents)
         return json_content
@@ -180,22 +220,36 @@ class EasyFileUtils:
         Given `json_content` convert it to a string and write to the given `json_filename`.
         """
         os.makedirs(os.path.dirname(json_filename), exist_ok=True)
-        json_str = json.dumps(json_content)
+        json_str = json.dumps(json_content, indent=2, sort_keys=True)
         with open(json_filename, "w") as json_file:
             json_file.write(json_str)
         return json_filename
 
     @classmethod
-    def _dict_to_easy_file(cls, easy_dict):
+    def _dicts_to_easy_files(cls, metadata_tags):
         """
         Using the details provided in the easy dict, open the corresponding
         audio file and set the metadata tags to match those provided in the
         dict. NOTE This does not write to the file yet.
         """
-        easy_file = cls._open_mp3_or_mp4_or_flac(easy_dict["_filename"])
-        for k in AUDIO_FILE_METADATA_FIELDS:
-            easy_file[k] = easy_dict.get(k, "")
-        return easy_file
+        if isinstance(metadata_tags, dict):
+            metadata_tags = [metadata_tags]
+        easy_files = []
+        failed = []
+        missing = []
+        for tag in metadata_tags:
+            easy_file = None
+            try:
+                easy_file = EasyFileUtils._open_mp3_or_mp4_or_flac(tag["_filename"])
+                easy_files.append(easy_file)
+            except TypeError:
+                failed.append(tag['_filename'])
+            except FileNotFoundError:
+                missing.append(tag['_filename'])
+            if easy_file:
+                for k in AUDIO_FILE_METADATA_FIELDS:
+                    easy_file[k] = tag.get(k) or ""
+        return easy_files, failed, missing
 
     @staticmethod
     def _easy_file_to_dict(easy_file):
@@ -219,35 +273,34 @@ class EasyFileUtils:
         Given a filename open the file using the most suitable mutagen file handler type.
         """
         if not os.path.isfile(filename):
-            raise Exception("Invalid file or file does not exist: %s" % filename)
+            raise FileNotFoundError(filename)
         ext = os.path.splitext(filename)[1]
         # TODO patch in dict of SUPPORTED_FILE_TYPES
         # audio_file = SUPPORTED_FILE_MAP[ext](filename) # default_dict
         if ext == ".mp3":
             return EasyID3(filename)
         elif ext == ".m4a":
-            try:
-                return EasyMP4(filename)
-            except mp4.MP4StreamInfoError as e:
-                raise Exception("Invalid Mp4: %s" % filename)
+            return EasyMP4(filename)
         elif ext == ".flac":
             return flac.FLAC(filename)
         else:
-            raise Exception("Invalid file type: %s" % filename)
+            raise TypeError(ext)
 
 
 class MetaDataTagUtils:
-    """For mangling file metadata via their corresponding easy_dicts"""
+    """For mangling file metadata via their corresponding metadata_tags"""
 
     @staticmethod
     def map_to_metadata_tags(db_tags):
-        """
-        """
-        metadata_tags = [{
-            **ed,
-            "genre": "".join(ed['crates']),
-            "comment": "".join(ed["playlists"])
-        } for ed in db_tags]
+        """ """
+        metadata_tags = [
+            {
+                **ed,
+                "genre": " ".join(ed["crates"]),
+                "comment": " ".join(ed["playlists"]),
+            }
+            for ed in db_tags
+        ]
         return metadata_tags
 
     @staticmethod
@@ -256,7 +309,9 @@ class MetaDataTagUtils:
         return keep_keys(metadata_tags, necessary_tags)
 
     @classmethod
-    def add_metadata_tags(cls, easy_dicts, tag_name, metadata_fields, remove_tag=False):
+    def add_metadata_tags(
+        cls, metadata_tags, tag_name, metadata_fields, remove_tag=False
+    ):
         """
         FIXME rename add tags to metadata fields
         Add (or remove) tags to metadata field for given list of dicts.
@@ -267,15 +322,15 @@ class MetaDataTagUtils:
             metadata_fields = [metadata_fields]
         cls.validate_metadata_fields(metadata_fields)
         tagger_fn = cls.remove_tag_fn if remove_tag else cls.add_tag_fn
-        for af in easy_dicts:
+        for af in metadata_tags:
             for field in metadata_fields:
                 af[field] = tagger_fn(af.get(field) or "", tag_name)
 
     @classmethod
-    def clear_all_specified_metadata(cls, easy_dicts, metadata_fields):
+    def clear_all_specified_metadata(cls, metadata_tags, metadata_fields):
         """
-        Clear a given metadata field from all easy_dicts.
-        NOTE: this modifies the `easy_dicts`
+        Clear a given metadata field from all metadata_tags.
+        NOTE: this modifies the `metadata_tags`
 
         `metadata_fields` - a string or list of strings representing metadata fields
         FIXME example
@@ -284,7 +339,7 @@ class MetaDataTagUtils:
         if isinstance(metadata_fields, str):
             metadata_fields = [metadata_fields]
         cls.validate_metadata_fields(metadata_fields)
-        for af in easy_dicts:
+        for af in metadata_tags:
             for field in metadata_fields:
                 af[field] = ""
 

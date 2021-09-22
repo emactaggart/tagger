@@ -164,7 +164,6 @@ class UnusedJunk:
     #     MetaDataTagUtils.add_metadata_tags(
     #         easy_dicts, tag_name, metadata_name, remove_tags
     #     )
-    #     # XXX
     #     # easy_dicts = [
     #     #     {**ed, metadata_name: MetaDataTagUtils.add_tag(ed.get("metadata"))} for ed in easy_dicts
     #     # ]

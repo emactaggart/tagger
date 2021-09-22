@@ -1,3 +1,6 @@
+import os
+
+
 def first(thing):
     if isinstance(thing, list):
         try:
@@ -37,3 +40,7 @@ def thread(things, *fns):
             return None
         result = f(result)
     return result
+
+
+def absolute_path(filepath):
+    return os.path.abspath(os.path.expanduser(filepath))
