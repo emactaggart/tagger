@@ -21,8 +21,7 @@ def create_backup(library_type, library_path, output_directory):
     if library_type == LibraryType.mixxx:
         database_filename = library_path
         mixxx_tags = mixxx.tags_from_library(database_filename)
-        filenames = [tag['_filename'] for tag in mixxx_tags]
-        track_metadata_tags, failed, missing = EasyFileUtils.read_tags_from_filenames(filenames)
+        track_metadata_tags, failed, missing = EasyFileUtils.read_tags_from_tags(mixxx_tags)
         EasyFileUtils.export_tags_to_file(output_directory, track_metadata_tags, failed, missing, "backup")
     else:
         raise ValueError("Invalid `library_type`.")

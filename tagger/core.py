@@ -5,7 +5,7 @@ from datetime import datetime
 from mutagen import flac, mp4
 from mutagen.easyid3 import EasyID3
 from mutagen.easymp4 import EasyMP4
-from tagger.utils import absolute_path, first, keep_keys
+from tagger.utils import absolute_path, drop_falsy, first, keep_keys
 
 ##### vars & config
 
@@ -91,7 +91,6 @@ class EasyFileUtils:
         {
             "filename": "song.mp3",
             "_filename": "/home/username/Music/song.mp3",
-            "ext": ".mp3",
             "album": "the album",
             "title": "the title",
             "artist": "the artist",
@@ -132,6 +131,16 @@ class EasyFileUtils:
         return metadata_tags, failed, missing
 
     @staticmethod
+    def read_tags_from_tags(metadata_tags):
+        """
+        Grab the filenames from each metadata tag and fetch the metadata that's actually in the file.
+        FIXME naming
+        """
+        filenames = [tag['_filename'] for tag in metadata_tags]
+        track_metadata_tags, failed, missing = EasyFileUtils.read_tags_from_filenames(filenames)
+        return track_metadata_tags, failed, missing
+
+    @staticmethod
     def write_tags_to_files(metadata_tags):
         """
         Given a list of modified EasyDicts, write metadata fields to corresponding audio files (via easy_dict['_filename'])
@@ -139,14 +148,15 @@ class EasyFileUtils:
         - performance, minimize number of writes? avoid writing timestamps?
         - Fail safe,  when files do not exist, loud=True?
         - improve logging vs printing
-        - optimize by diffing real tags and updated tags, writing only those that have changed
         """
-        easy_files, failed, missing = EasyFileUtils._dicts_to_easy_files(metadata_tags)
+        track_metadata_tags, _, _ = EasyFileUtils.read_tags_from_tags(metadata_tags)
+        updated_tags = MetaDataTagUtils.find_updated_tags(metadata_tags, track_metadata_tags)
+        easy_files, failed, missing = EasyFileUtils._dicts_to_easy_files(updated_tags)
+        print("Total %s file tags found. %s tags require updating..." % (len(track_metadata_tags), len(easy_files)))
         if failed:
             print("Failed", failed)
         if missing:
             print("Missing: ", missing)
-        print("...Writing tags to %s files..." % len(easy_files))
         for i, e in enumerate(easy_files):
             if i % 100 == 0:
                 print("%s of %s..." %(i, len(easy_files)))
@@ -258,7 +268,7 @@ class EasyFileUtils:
         easy_dict = {
             "filename": os.path.basename(absolute_name),
             "_filename": absolute_name,
-            "ext": os.path.splitext(absolute_name)[1],
+            # "ext": os.path.splitext(absolute_name)[1],
             **{
                 k: first(v)
                 for k, v in easy_file.items()
@@ -307,6 +317,17 @@ class MetaDataTagUtils:
     def remove_unnecessary_tags(metadata_tags):
         necessary_tags = [*AUDIO_FILE_METADATA_FIELDS, *AUDIO_FILE_EXTRAS]
         return keep_keys(metadata_tags, necessary_tags)
+
+    @staticmethod
+    def find_updated_tags(tags_a, tags_b):
+        """
+
+        """
+        seta = set(frozenset(t.items()) for t in drop_falsy(tags_a))
+        setb = set(frozenset(t.items()) for t in drop_falsy(tags_b))
+        results = set.difference(seta, setb)
+        results_dict = list(map(dict, results))
+        return results_dict
 
     @classmethod
     def add_metadata_tags(

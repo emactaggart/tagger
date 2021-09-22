@@ -33,6 +33,15 @@ def drop_keys(dict_or_list, keys_to_drop):
         return {k: v for k, v in dict_or_list.items() if k not in keys_to_drop}
 
 
+def drop_falsy(dicts):
+    """
+    Return a list of dicts having removed keys with falsy values.
+    """
+    if isinstance(dicts, dict):
+        dicts = [dicts]
+    return [{k:v for k,v in d.items() if v} for d in dicts]
+
+
 def thread(things, *fns):
     result = things
     for f in fns:
