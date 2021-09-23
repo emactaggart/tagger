@@ -1,4 +1,4 @@
-from tagger.cmd import create_backup, generate_metadata_tags_from_library, apply_renaming_to_files, restore_metadata_tags_from_backup
+from tagger.cmd import LibraryType, create_backup, generate_metadata_tags_from_library, apply_renaming_to_files, restore_metadata_tags_from_backup
 import click
 
 
@@ -11,7 +11,7 @@ def main(ctx):
 @main.command(
     short_help="Create a backup of the existing metadata tags from all of the audio files contained within a given library."
 )
-@click.option("--type", type=click.Choice(["mixxx"]), help="Type of library (which dj software).")
+@click.option("--type", type=click.Choice(LibraryType.all()), help="Type of library (which dj software).")
 @click.option("--libpath", help="location of dj softare library.")
 @click.option("--output-dir", help="Json backup output dir.")
 @click.pass_context
@@ -27,7 +27,7 @@ def backup(ctx, type, libpath, output_dir):
 @main.command(
     short_help="Generate metadata tags according to the organization of a library's crates and save them to a json file."
 )
-@click.option("--type", type=click.Choice(["mixxx"]), help="Type of library (which dj software).")
+@click.option("--type", type=click.Choice(LibraryType.all()), help="Type of library (which dj software).")
 @click.option("--libpath", help="location of dj softare library.")
 @click.option("--output-dir", help="Json file output dir.")
 @click.pass_context

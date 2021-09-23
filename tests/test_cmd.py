@@ -13,7 +13,8 @@ from tagger.tagger_cli import main
 resource_dir = os.path.join("tests", "resources")
 output_dir = os.path.join(resource_dir, "output")
 
-resource = lambda filename: absolute_path(os.path.join(resource_dir, filename))
+def resource(filename):
+    return absolute_path(os.path.join(resource_dir, filename))
 
 json_backup_filename = resource("backup-tags-2021-09-23T11-01.json")
 mp3_filename = resource("test.mp3")

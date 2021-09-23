@@ -1,4 +1,5 @@
 import os
+from sys import platform
 
 
 def first(thing):
@@ -53,3 +54,17 @@ def thread(things, *fns):
 
 def absolute_path(filepath):
     return os.path.abspath(os.path.expanduser(filepath))
+
+
+def get_windows_drive_letter(directory):
+    """
+    In the context of serato libraries, serato does not store a drive letter,
+    but does store the file in absolute form. So depending on where the serato
+    library is, determines which drive letter the files should use.
+
+    ex. _Serato_ is on E:/, then any tracks should be prefixed with E:/
+    """
+    if platform == "linux":
+        return "/"
+    # TODO win32api.GetLogicalDriveStrings().split("\x00")
+    return "/"

@@ -1,5 +1,5 @@
 import os
-from tagger.utils import absolute_path, first
+from tagger.utils import absolute_path, first, get_windows_drive_letter
 from tagger.serato_tags_scripts_database_v2 import parse
 
 
@@ -7,7 +7,6 @@ def tags_from_library(serato_directory):
     """
     # FIXME cross device tracks? Since serato doesn't have a full filepath
     """
-
     all_tracks = _database_v2_contents(serato_directory)
     all_crates = _all_crates(serato_directory)
     find_track = lambda fn: first([tr for tr in all_tracks if tr["filename"] == fn])
@@ -21,7 +20,6 @@ def tags_from_library(serato_directory):
                 if not "crates" in track_details:
                     track_details["crates"] = []
                 track_details["crates"].append(crate[0])
-                print(track_details)
             else:
                 missing.append(track_name)
 
@@ -30,7 +28,7 @@ def tags_from_library(serato_directory):
             "playlists": [],
             "crates": [],
             **track,
-            "_filename": os.path.join(serato_directory, track["filename"]),
+            "_filename": os.path.join(get_windows_drive_letter(serato_directory), track["filename"]), # FIXME handle windows drive letters
             "filename": os.path.basename(track["filename"]),
         }
         for track in all_tracks

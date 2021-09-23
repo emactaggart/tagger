@@ -72,39 +72,3 @@ def parse(fp):
                 value = None
 
         yield name, length, value
-
-
-def main(argv=None):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('file', metavar='FILE', type=argparse.FileType('rb'))
-    args = parser.parse_args(argv)
-
-    for name, length, value in parse(args.file):
-        fieldname = FIELDNAMES.get(name, 'Unknown')
-        if isinstance(value, tuple):
-            print('{name} ({fieldname}, {length} B)'.format(
-                name=name,
-                fieldname=fieldname,
-                length=length,
-            ))
-            for name, length, value in value:
-                fieldname = FIELDNAMES.get(name, 'Unknown')
-                print('  {name} ({fieldname}, {length} B): {value!r}'.format(
-                    name=name,
-                    fieldname=fieldname,
-                    length=length,
-                    value=value,
-                ))
-        else:
-            print('{name} ({length} B): {value!r}'.format(
-                name=name,
-                length=length,
-                fieldname=fieldname,
-                value=value,
-            ))
-
-    return 0
-
-
-if __name__ == '__main__':
-    sys.exit(main())
