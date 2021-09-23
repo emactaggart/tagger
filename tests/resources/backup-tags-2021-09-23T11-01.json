@@ -1,0 +1,28 @@
+[
+  {
+    "_filename": "/home/evan/Development/tagger/tests/resources/test.mp3",
+    "album": "album",
+    "artist": "artist",
+    "comment": "@comment",
+    "filename": "test.mp3",
+    "genre": "#g2 #genre",
+    "title": "title"
+  },
+  {
+    "_filename": "/home/evan/Development/tagger/tests/resources/test.m4a",
+    "album": "album",
+    "artist": "artist",
+    "comment": "@comment",
+    "filename": "test.m4a",
+    "genre": "#g2 #genre",
+    "title": "title"
+  },
+  {
+    "_filename": "/home/evan/Development/tagger/tests/resources/test.flac",
+    "album": "album",
+    "artist": "artist",
+    "filename": "test.flac",
+    "genre": "#g2 #genre",
+    "title": "title"
+  }
+]

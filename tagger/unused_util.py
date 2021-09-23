@@ -783,3 +783,160 @@ class UnusedFileUtils:
         easy_dicts = EasyFileUtils.read_tags_from_filenames(filenames)
         MetaDataTagUtils.clear_all_specified_metadata(easy_dicts, metadata_name)
         EasyFileUtils.write_tags_to_files(easy_dicts)
+
+
+
+
+
+
+
+
+
+
+
+SERATO_ENCODING = 'utf-16-be'
+
+emp = b'\x00\x00'
+
+def ra(a, b):
+    global c
+    c.seek(a)
+    return c.read(b)
+
+def print_from(pos, end=9999999):
+    global c
+    c.seek(pos)
+
+    cur = c.read(2)
+    data = b''
+    while cur != b'\x00\x00' and c.tell() < end:
+        data += cur
+        cur = c.read(2)
+    return data
+
+
+crate_data = {
+    "version": None,
+    "tracks": None
+}
+
+def crate_setter(key):
+    def _crate_setter(value):
+        crate_data[key] = value
+        print(key, ":", value)
+    return _crate_setter
+
+def do_print(data):
+    print("data: ", data, ";")
+
+def layout():
+
+    crate_path = "/home/evan/Desktop/_Serato_/Subcrates/bm2.crate"
+    c = open(crate_path, 'rb')
+
+    c.close()
+
+
+    def print_be(bytes):
+        print(bytes.decode("utf-8-be"))
+
+
+
+    c.seek(0)
+    read(c, b"vrsn")
+    read(c, nill)
+    read(c, (8, crate_setter('version')))
+    read(c, "/Serato ScratchLive Crate")
+
+    c.seek(0)
+    go(c, version)
+    go(c, [b'osrt',
+           2,
+           b'tvcn',
+           2,
+           # "song",
+           # b'brev', nill
+           ])
+
+    type(int)
+
+
+
+    nill
+
+
+    version = [b"vrsn", nil, (8, crate_setter('version')), "/Serato ScratchLive Crate"]
+
+    header_open = ["otrk"]
+    columns = ["ovct", (int, tvcw), "tvcn", (int, tvcn), (tvcn, column_name), "tvcw", (int, tvcw), "\x00", "0"]
+    tail = ["osrt", (int, osrt), "tvcn", (int, tvcn), (tvcn, sort), (int(5), sort_rev)]
+    header_close = ["ortk"]
+    tracks = [(int, ortk), "ptrk", (int, ptrk), (ptrk, track_name)]
+
+
+def go(file, things):
+    for thing in things:
+        read(file, thing)
+
+
+def read(file, thing):
+    if thing == nil:
+        skip_bytes(file, thing)
+        print("nil")
+    elif isinstance(thing, str):
+        skip_serato_string(file, thing)
+        print(thing)
+    elif isinstance(thing, bytes):
+        skip_bytes(file, thing)
+        print(thing)
+    elif isinstance(thing, int):
+        value = read_int(file, thing)
+        print(value)
+    elif isinstance(thing, tuple):
+        if isinstance(thing[0], int):
+            value = read_serato_string(file, thing[0])
+            thing[1](value)
+        elif isinstance(thing[0], str):
+            value = skip_serato_string(file, thing[0])
+            print(value)
+
+
+
+
+def read_raw_string(file, length):
+    data = file.read(length)
+    return data.decode("utf-8")
+
+def read_serato_string(file, length):
+    """
+    """
+    data = file.read(length)
+    return data.decode(SERATO_ENCODING)
+
+def read_bytes(file, length):
+    data = file.read(length)
+    return read
+
+def read_int(file, length):
+    data = file.read(length)
+    return int.from_bytes(data, byteorder='big')
+
+def skip_raw_string(file, string):
+    length = len(string)
+    raw_data = file.read(length)
+    data = raw_data.decode()
+    if data != string:
+        raise Exception("Holy fuck!", data)
+
+def skip_serato_string(file, string):
+    length = len(string) * 2
+    raw_data = file.read(length)
+    data = raw_data.decode(SERATO_ENCODING)
+    if data != string:
+        raise Exception("Holy fuck!", data)
+
+def skip_bytes(file, match):
+    length = len(match)
+    raw_data = file.read(length)
+    if raw_data != match:
+        raise Exception("Holy fuck!", raw_data)

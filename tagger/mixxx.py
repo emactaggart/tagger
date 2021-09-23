@@ -39,13 +39,13 @@ select
     l.album,
     l.genre,
     l.comment,
-    (select group_concat("@" || replace(pl.name, " ", "-"), ",") from Playlists pl
+    (select group_concat(replace(pl.name, " ", "-"), ",") from Playlists pl
             join PlaylistTracks pt on pl.id = pt.playlist_id
             where l.id = pt.track_id
                   and pl.name not like '202%' and pl.name != 'Auto DJ'
             order by pl.name
     ) as playlists,
-    (select group_concat("#" || replace(cr.name, " ", "-"), ",") from Crates cr
+    (select group_concat(replace(cr.name, " ", "-"), ",") from Crates cr
             join crate_tracks ct on cr.id = ct.crate_id
             where l.id = ct.track_id
             order by cr.name

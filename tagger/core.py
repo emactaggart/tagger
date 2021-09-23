@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+import re
 
 from mutagen import flac, mp4
 from mutagen.easyid3 import EasyID3
@@ -27,6 +28,14 @@ AUDIO_FILE_EXTRAS = [
     "filename",
     "type",
 ]
+
+
+SYMBOL_CHARS = tuple("""! " # $ % & ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? @ [ \\ ] ^ _ ` { | } ~""".split(" "))
+# / is-less-than 0
+# 9 is-less-than :
+# @ is-less-than A
+# Z is-less-than [
+# z is-less-than {
 
 
 def do_setup():
@@ -301,13 +310,19 @@ class MetaDataTagUtils:
     """For mangling file metadata via their corresponding metadata_tags"""
 
     @staticmethod
+    def tag_logic(tags):
+        """
+        We only want to write specific tags to the genre tag. These typically begin with sumbols
+        """
+        is_permitted = lambda x: x.startswith(SYMBOL_CHARS)
+        return [tag for tag in tags if is_permitted(tag)]
+
+    @staticmethod
     def map_to_metadata_tags(db_tags):
-        """ """
         metadata_tags = [
             {
                 **ed,
-                "genre": " ".join(ed["crates"]),
-                "comment": " ".join(ed["playlists"]),
+                "genre": " ".join(MetaDataTagUtils.tag_logic(ed["crates"])),
             }
             for ed in db_tags
         ]
@@ -320,9 +335,6 @@ class MetaDataTagUtils:
 
     @staticmethod
     def find_updated_tags(tags_a, tags_b):
-        """
-
-        """
         seta = set(frozenset(t.items()) for t in drop_falsy(tags_a))
         setb = set(frozenset(t.items()) for t in drop_falsy(tags_b))
         results = set.difference(seta, setb)
