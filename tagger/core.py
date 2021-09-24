@@ -30,7 +30,11 @@ AUDIO_FILE_EXTRAS = [
 ]
 
 
-SYMBOL_CHARS = tuple("""! " # $ % & ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? @ [ \\ ] ^ _ ` { | } ~""".split(" "))
+SYMBOL_CHARS = tuple(
+    """! " # $ % & ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? @ [ \\ ] ^ _ ` { | } ~""".split(
+        " "
+    )
+)
 # / is-less-than 0
 # 9 is-less-than :
 # @ is-less-than A
@@ -145,30 +149,39 @@ class EasyFileUtils:
         Grab the filenames from each metadata tag and fetch the metadata that's actually in the file.
         FIXME naming
         """
-        filenames = [tag['_filename'] for tag in metadata_tags]
-        track_metadata_tags, failed, missing = EasyFileUtils.read_tags_from_filenames(filenames)
+        filenames = [tag["_filename"] for tag in metadata_tags]
+        track_metadata_tags, failed, missing = EasyFileUtils.read_tags_from_filenames(
+            filenames
+        )
         return track_metadata_tags, failed, missing
 
     @staticmethod
-    def write_tags_to_files(metadata_tags):
+    def write_tags_to_files(metadata_tags, path_replacements=None):
         """
         Given a list of modified EasyDicts, write metadata fields to corresponding audio files (via easy_dict['_filename'])
-        FIXME
-        - performance, minimize number of writes? avoid writing timestamps?
-        - Fail safe,  when files do not exist, loud=True?
-        - improve logging vs printing
+        `path_replacements` are a list of tuples to rewrite the paths of filenames in the case of swapping file systems. This allows advanced users to apply tags the were generated on a different machine (assuming the new [un]adjusted file paths all line up.)
         """
+        if path_replacements:
+            for tag in metadata_tags:
+                for (path, replacement) in path_replacements:
+                    if tag['_filename'].startswith(path):
+                        tag['_filename'] = tag['_filename'].replace(path, replacement, 1)
         track_metadata_tags, _, _ = EasyFileUtils.read_tags_from_tags(metadata_tags)
-        updated_tags = MetaDataTagUtils.find_updated_tags(metadata_tags, track_metadata_tags)
+        updated_tags = MetaDataTagUtils.find_updated_tags(
+            metadata_tags, track_metadata_tags
+        )
         easy_files, failed, missing = EasyFileUtils._dicts_to_easy_files(updated_tags)
-        print("Total %s file tags found. %s tags require updating..." % (len(track_metadata_tags), len(easy_files)))
+        print(
+            "Total %s file tags found. %s tags require updating..."
+            % (len(track_metadata_tags), len(easy_files))
+        )
         if failed:
             print("Failed", failed)
         if missing:
             print("Missing: ", missing)
         for i, e in enumerate(easy_files):
             if i % 100 == 0:
-                print("%s of %s..." %(i, len(easy_files)))
+                print("%s of %s..." % (i, len(easy_files)))
             e.save()
         print("DINNERS READY")
 
@@ -200,14 +213,13 @@ class EasyFileUtils:
         """
         timestamp_str = datetime.now().strftime("%Y-%m-%dT%H-%M")
         metadata_tags = MetaDataTagUtils.remove_unnecessary_tags(metadata_tags)
-        if metadata_tags:
-            tags_filename = os.path.join(
-                output_directory,
-                "%s-tags-%s.json" % (filename_prefix, timestamp_str)
-                if filename_prefix
-                else "export-tags-%s.json" % timestamp_str,
-            )
-            EasyFileUtils.write_json_file(tags_filename, metadata_tags)
+        tags_filename = os.path.join(
+            output_directory,
+            "%s-tags-%s.json" % (filename_prefix, timestamp_str)
+            if filename_prefix
+            else "export-tags-%s.json" % timestamp_str,
+        )
+        EasyFileUtils.write_json_file(tags_filename, metadata_tags)
         if not failed:
             failed = []
         if not missing:
@@ -220,8 +232,13 @@ class EasyFileUtils:
                 else "export-errors-%s.json" % timestamp_str,
             )
             EasyFileUtils.write_json_file(
-                errors_filename, {"failed": failed, "missing": missing}
+                errors_filename,
+                {
+                    "failed": [f.replace("\\", "/") for f in failed],
+                    "missing": [f.replace("\\", "/") for f in missing],
+                },
             )
+        return tags_filename
 
     @staticmethod
     def read_json_file(json_filename):
@@ -238,6 +255,7 @@ class EasyFileUtils:
         """
         Given `json_content` convert it to a string and write to the given `json_filename`.
         """
+        json_filename = absolute_path(json_filename)
         os.makedirs(os.path.dirname(json_filename), exist_ok=True)
         json_str = json.dumps(json_content, indent=2, sort_keys=True)
         with open(json_filename, "w") as json_file:
@@ -262,9 +280,9 @@ class EasyFileUtils:
                 easy_file = EasyFileUtils._open_mp3_or_mp4_or_flac(tag["_filename"])
                 easy_files.append(easy_file)
             except TypeError:
-                failed.append(tag['_filename'])
+                failed.append(tag["_filename"])
             except FileNotFoundError:
-                missing.append(tag['_filename'])
+                missing.append(tag["_filename"])
             if easy_file:
                 for k in AUDIO_FILE_METADATA_FIELDS:
                     easy_file[k] = tag.get(k) or ""
@@ -331,6 +349,9 @@ class MetaDataTagUtils:
     @staticmethod
     def remove_unnecessary_tags(metadata_tags):
         necessary_tags = [*AUDIO_FILE_METADATA_FIELDS, *AUDIO_FILE_EXTRAS]
+        for t in metadata_tags:
+            # fix weird windows backslashes instead of forward slashes
+            t["_filename"] = t["_filename"].replace("\\", "/")
         return keep_keys(metadata_tags, necessary_tags)
 
     @staticmethod
