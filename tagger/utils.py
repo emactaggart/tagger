@@ -1,3 +1,4 @@
+import pathlib
 import os
 from sys import platform
 
@@ -64,7 +65,4 @@ def get_windows_drive_letter(directory):
 
     ex. _Serato_ is on E:/, then any tracks should be prefixed with E:/
     """
-    if platform == "linux":
-        return "/"
-    # TODO win32api.GetLogicalDriveStrings().split("\x00")
-    return "/"
+    return pathlib.Path(directory).drive + "/"
