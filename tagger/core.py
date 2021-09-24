@@ -206,18 +206,15 @@ class EasyFileUtils:
 
     @staticmethod
     def export_tags_to_file(
-        output_directory, metadata_tags, failed=None, missing=None, filename_prefix=""
+            output_directory, output_filename, metadata_tags, failed=None, missing=None
     ):
         """
         NOTE: This will remove unrelated/unwanted information from `metadata_tags`.
         """
-        timestamp_str = datetime.now().strftime("%Y-%m-%dT%H-%M")
         metadata_tags = MetaDataTagUtils.remove_unnecessary_tags(metadata_tags)
         tags_filename = os.path.join(
             output_directory,
-            "%s-tags-%s.json" % (filename_prefix, timestamp_str)
-            if filename_prefix
-            else "export-tags-%s.json" % timestamp_str,
+            output_filename
         )
         EasyFileUtils.write_json_file(tags_filename, metadata_tags)
         if not failed:
@@ -227,9 +224,7 @@ class EasyFileUtils:
         if failed or missing:
             errors_filename = os.path.join(
                 output_directory,
-                "%s-errors-%s.json" % (filename_prefix, timestamp_str)
-                if filename_prefix
-                else "export-errors-%s.json" % timestamp_str,
+                os.path.splitext(output_filename)[0] + "-errors" + os.path.splitext(output_filename)[1]
             )
             EasyFileUtils.write_json_file(
                 errors_filename,
@@ -239,6 +234,12 @@ class EasyFileUtils:
                 },
             )
         return tags_filename
+
+    @staticmethod
+    def make_filename(prefix="export"):
+        timestamp_str = datetime.now().strftime("%Y-%m-%dT%H-%M")
+        return "%s-tags-%s.json" % (prefix, timestamp_str)
+
 
     @staticmethod
     def read_json_file(json_filename):

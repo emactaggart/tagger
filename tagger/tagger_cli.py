@@ -16,12 +16,13 @@ def main(ctx):
 @click.option("--type", "-t", type=click.Choice(LibraryType.all()), help="Type of library (which dj software).")
 @click.option("--libpath", "-l", help="location of dj softare library.")
 @click.option("--output-dir", "-o", help="Json backup output dir.")
+@click.option("--output-filename", "-n", help="Specific filename to be written.")
 @click.pass_context
-def backup(ctx, type, libpath, output_dir):
+def backup(ctx, type, libpath, output_dir, output_filename):
     """
     # FIXME deal with missing/hidden files
     """
-    json_file =  create_backup(type, libpath, output_dir)
+    json_file =  create_backup(type, libpath, output_dir, output_filename)
     click.echo(json_file)
     # create_backup(library_type, library_path, output_filename)
     ...
@@ -33,13 +34,14 @@ def backup(ctx, type, libpath, output_dir):
 @click.option("--type", '-t', type=click.Choice(LibraryType.all()), help="Type of library (which dj software).")
 @click.option("--libpath", '-l', help="location of dj softare library.")
 @click.option("--output-dir", '-o', help="Json file output dir.")
+@click.option("--output-filename", "-n", help="Specific filename to be written.")
 @click.pass_context
 def make_tags(
-    ctx, type, libpath, output_dir
+        ctx, type, libpath, output_dir, output_filename
 ):
     """
     """
-    json_file = generate_metadata_tags_from_library(type, libpath, output_dir)
+    json_file = generate_metadata_tags_from_library(type, libpath, output_dir, output_filename)
     click.echo(json_file)
     ...
 
