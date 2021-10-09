@@ -22,6 +22,10 @@ def restore_metadata_tags_from_backup(json_filename, path_replacements=None):
     """
     json_filename="/run/media/evan/5B24-5798/Mixing/Tags/Backups/export-tags-2021-10-09T14-44.json"
     metadata_tags = EasyFileUtils.read_json_file(json_filename)
+    ##########
+    attack = [t for t in metadata_tags if "waitin'" in t['title'].lower()]
+    EasyFileUtils.write_tags_to_files(metadata_tags=attack, path_replacements=path_replacements)
+    ##########
     EasyFileUtils.write_tags_to_files(metadata_tags, path_replacements)
 
 

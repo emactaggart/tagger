@@ -105,7 +105,7 @@ def rename(ctx, json_file):
 @click.option("--output-filename", "-n", help="Specific filename to be written.")
 @click.option("--replacement-dir", "-n", help="Where to move the old files?.")
 @click.pass_context
-def make_tags(ctx, type, libpath, json_file, replacement_dir=None):
+def relocate_files(ctx, type, libpath, json_file, replacement_dir=None):
     """
     NOTE: should also not to re-read tags from metadata
     """

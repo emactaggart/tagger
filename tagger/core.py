@@ -287,7 +287,8 @@ class EasyFileUtils:
             except FileNotFoundError:
                 missing.append(tag["_filename"])
             for k in AUDIO_FILE_METADATA_FIELDS:
-                easy_file[k] = tag.get(k) or ""
+                if easy_file is not None:
+                    easy_file[k] = tag.get(k) or ""
         return easy_files, failed, missing
 
     @staticmethod
