@@ -214,6 +214,7 @@ class CmdTests(TestCase):
             },
         ]
 
+    @skip("Deprecated - renaming is more complicated than this when it comes to software recognizing file name changes")
     def test_rename_files(self):
         reset_rename()
         cmd.apply_renaming_to_files(rename_json_filename)

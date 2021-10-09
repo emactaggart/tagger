@@ -160,6 +160,7 @@ class EasyFileUtils:
         """
         Given a list of modified EasyDicts, write metadata fields to corresponding audio files (via easy_dict['_filename'])
         `path_replacements` are a list of tuples to rewrite the paths of filenames in the case of swapping file systems. This allows advanced users to apply tags the were generated on a different machine (assuming the new [un]adjusted file paths all line up.)
+
         """
         if path_replacements:
             for tag in metadata_tags:
@@ -170,7 +171,7 @@ class EasyFileUtils:
         updated_tags = MetaDataTagUtils.find_updated_tags(
             metadata_tags, track_metadata_tags
         )
-        easy_files, failed, missing = EasyFileUtils._dicts_to_easy_files(updated_tags)
+        easy_files, failed, missing = EasyFileUtils._dicts_to_easy_files(metadata_tags=updated_tags)
         print(
             "Total %s file tags found. %s tags require updating..."
             % (len(track_metadata_tags), len(easy_files))
@@ -203,6 +204,7 @@ class EasyFileUtils:
             previous_absolute = r["_filename"]
             previous_dir = os.path.dirname(previous_absolute) + "/"
             os.rename(previous_absolute, previous_dir + new_filename)
+
 
     @staticmethod
     def export_tags_to_file(
@@ -278,15 +280,14 @@ class EasyFileUtils:
         for tag in metadata_tags:
             easy_file = None
             try:
-                easy_file = EasyFileUtils._open_mp3_or_mp4_or_flac(tag["_filename"])
+                easy_file = EasyFileUtils._open_mp3_or_mp4_or_flac(filename=tag["_filename"])
                 easy_files.append(easy_file)
             except TypeError:
                 failed.append(tag["_filename"])
             except FileNotFoundError:
                 missing.append(tag["_filename"])
-            if easy_file:
-                for k in AUDIO_FILE_METADATA_FIELDS:
-                    easy_file[k] = tag.get(k) or ""
+            for k in AUDIO_FILE_METADATA_FIELDS:
+                easy_file[k] = tag.get(k) or ""
         return easy_files, failed, missing
 
     @staticmethod

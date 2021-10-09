@@ -3,6 +3,47 @@ import sqlite3
 from tagger.utils import absolute_path
 
 
+
+def rename_track_locations(database_filename, original, replacement):
+    """
+    ie, the location, filename, and directory in the `track_locations` table
+    """
+    #     def track_location_exists(filename):
+    #         select_query = """
+    # select * from track_locations
+    #         where location = ?
+    #         order by id desc
+    #         limit 1;
+    #         """
+    #         exists = bool(_query_db(
+    #             database_filename,
+    #             select_query,
+    #             (filename,),
+    #         ))
+    #         return exists
+    # exists_before = track_location_exists(original)
+
+    rename_query = """
+update track_locations
+set location = :to,
+    filename = :to_filename,
+    directory = :to_directory
+where location = :from
+        """
+    _query_db(
+        database_filename,
+        rename_query,
+        {
+            "from": original,
+            "to": replacement,
+            "to_filename": os.path.basename(replacement),
+            "to_directory": os.path.dirname(replacement),
+        },
+    )
+    # replacement_exists_after = track_location_exists(replacement)
+    # return exists_before and replacement_exists_after
+
+
 def tags_from_library(database_filename):
     """
     Fetch a reasonably formatted list of metadata_tag dicts
@@ -52,16 +93,16 @@ select
     ) as crates
 from library l
 join track_locations tl on tl.id = l.location
-""",
+""", []
             ),
         )
     )
 
 
-def _query_db(db, query, *args):
+def _query_db(db, query, args):
     with sqlite3.connect(absolute_path(db)) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        cursor.execute(query, *args)
+        cursor.execute(query, args)
         results = cursor.fetchall()
     return results
