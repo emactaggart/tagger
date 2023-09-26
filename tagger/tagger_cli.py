@@ -2,7 +2,8 @@ from tagger.cmd import (
     LibraryType,
     create_backup,
     generate_metadata_tags_from_library,
-    apply_renaming_to_files, relocate_files,
+    apply_renaming_to_files,
+    do_relocate_files,
     restore_metadata_tags_from_backup,
 )
 import click
@@ -97,19 +98,24 @@ def rename(ctx, json_file):
 @click.option(
     "--type",
     "-t",
-    type=click.Choice(LibraryType.mixxx),
+    # type=click.Choice([LibraryType.mixxx]),
     help="Type of library (which dj software).",
 )
 @click.option("--libpath", "-l", help="location of dj softare library.")
 @click.option("--json-file", "-i", help="Json file.")
-@click.option("--output-filename", "-n", help="Specific filename to be written.")
 @click.option("--replacement-dir", "-n", help="Where to move the old files?.")
 @click.pass_context
 def relocate_files(ctx, type, libpath, json_file, replacement_dir=None):
     """
     NOTE: should also not to re-read tags from metadata
     """
-    files =  relocate_files(type, libpath, json_file, replacement_dir)
+    # tagger relocate-files -t mixxx --libpath ~/.mixxx/mixxxdb.sqlite --json-file ~/Desktop/new-songs.json --replacement-dir ~/Desktop/old-tracks
+    # print("SHIT FUCK")
+    # type="mixxx"
+    # libpath="/home/evan/.mixxx/mixxxdb.sqlite"
+    # json_file="/home/evan/Desktop/new-songs.json"
+    # replacement_dir="/home/evan/Desktop/old-tracks"
+    files =  do_relocate_files(library_type=type, library_path=libpath, json_filename=json_file, replacement_dir=replacement_dir)
     click.echo(files)
     ...
 

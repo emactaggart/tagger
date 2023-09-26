@@ -1,5 +1,6 @@
 from collections import namedtuple
 import os
+import pathlib
 
 from mutagen import mp4
 from tagger.core import first
@@ -585,186 +586,186 @@ class MixxxExporter:
     Utils for querying mixxx-db.sqlite file
     """
 
-    # @staticmethod
-    # def export_library_as_json(database_filename, json_directory, generate_metadata_tags=False):
-    #     easy_dicts = MixxxExporter.tags_from_library(database_filename)
-    #     if generate_metadata_tags:
-    #         # In this case we simply replace genre and comment with the crates and playlists
-    #         easy_dicts = [{
-    #             **ed,
-    #             "genre": "".join(ed['crates']),
-    #             "comment": "".join(ed["playlists"])
-    #         } for ed in easy_dicts]
-    #     easy_dicts = drop_keys(easy_dicts, ["id", "playlists", "crates", "location"])
-    #     json_filename = os.path.join(json_directory, MixxxExporter.make_tag_backup_filename())
-    #     JsonUtils.write_json_file(json_filename, easy_dicts)
-    #     return json_filename
+    @staticmethod
+    def export_library_as_json(database_filename, json_directory, generate_metadata_tags=False):
+        easy_dicts = MixxxExporter.tags_from_library(database_filename)
+        if generate_metadata_tags:
+            # In this case we simply replace genre and comment with the crates and playlists
+            easy_dicts = [{
+                **ed,
+                "genre": "".join(ed['crates']),
+                "comment": "".join(ed["playlists"])
+            } for ed in easy_dicts]
+        easy_dicts = drop_keys(easy_dicts, ["id", "playlists", "crates", "location"])
+        json_filename = os.path.join(json_directory, MixxxExporter.make_tag_backup_filename())
+        JsonUtils.write_json_file(json_filename, easy_dicts)
+        return json_filename
 
-    # @staticmethod
-    # def to_metadata_tags(database_filename, json_directory):
-    #     easy_dicts = MixxxExporter.tags_from_library(database_filename)
-    #     easy_dicts = [{
-    #         **ed,
-    #         "genre": "".join(ed['crates']),
-    #         "comment": "".join(ed["playlists"])
-    #     } for ed in easy_dicts]
-    #     easy_dicts = drop_keys(easy_dicts, ["id", "playlists", "crates", "location"])
-    #     return easy_dicts
-
-
-    # @staticmethod
-    # def make_tag_backup_filename():
-    #     tag_backup_filename = "track-tags-backup-%s.json" % datetime.now().strftime(
-    #         "%Y-%m-%dT%H-%M"
-    #     )
-    #     return tag_backup_filename
-
-    # @classmethod
-    # def export_all_m3us(
-    #     cls,
-    #     playlist_save_dir,
-    #     source_type="crate",
-    #     overwrite_existing_m3u=False,
-    #     overridden_track_path=None,
-    # ):
-    #     """
-    #     `playlist_save_dir` - directory where the m3u playlist file will be saved
-    #     `track_path` - in the case of moving files, or tracks being on a usb, specify a custom one here.
-    #     This is primarily useful if switching to and from windows, where the device path will likely be different.#!/usr/bin/env python
-    #     Relative paths are acceptable.
-    #     """
-    #     if not (os.path.exists(playlist_save_dir) and os.path.isdir(playlist_save_dir)):
-    #         pathlib.Path(playlist_save_dir).mkdir(parents=True, exist_ok=True)
-    #     print("Exporting Playlists to: %s" % playlist_save_dir)
-    #     if source_type == "playlist":
-    #         playlists = MixxxDb.get_all_playlists()
-    #     else:
-    #         playlists = MixxxDb.get_all_crates()
-    #     for pl in playlists:
-    #         cls.export_m3u(
-    #             pl,
-    #             playlist_save_dir,
-    #             source_type,
-    #             overwrite_existing_m3u,
-    #             overridden_track_path,
-    #         )
-
-    # @classmethod
-    # def export_m3u(
-    #     cls,
-    #     playlist_name,
-    #     playlist_save_dir,
-    #     source_type="crate",
-    #     overwrite_existing_m3u=False,
-    #     overridden_track_path=None,
-    # ):
-    #     """
-    #     For a given playlist_name (as listed in mixxx) for a given source_type
-    #     (create or playlist), create an m3u file and save it in
-    #     playlist_save_dir, optionally overwriting an existing m3u file, with the
-    #     option to override the track path for each track entry in the m3u file.
-    #     """
-    #     m3u_name = os.path.join(playlist_save_dir, playlist_name + ".m3u")
-    #     print(m3u_name)
-    #     if not overwrite_existing_m3u and os.path.exists(m3u_name):
-    #         raise Exception("Playlist file already exists: %s" % m3u_name)
-    #     if source_type == "playlist":
-    #         tracks = MixxxDb.get_all_tracks_by_playlist(playlist_name)
-    #     else:
-    #         tracks = MixxxDb.get_all_tracks_by_crate(playlist_name)
-    #     track_filenames = [tr[1] for tr in tracks]
-    #     m3u_contents = cls._make_m3u_contents(
-    #         playlist_name, track_filenames, overridden_track_path
-    #     )
-    #     with open(m3u_name, "w") as m3u_file:
-    #         m3u_file.write(m3u_contents)
-
-    # @staticmethod
-    # def _make_m3u_contents(tracks, overridden_track_path=None):
-    #     if overridden_track_path:
-    #         tracks = [
-    #             os.path.join(overridden_track_path, os.path.basename(tr))
-    #             for tr in tracks
-    #         ]
-    #     m3u_contents = """#EXTM3U\n"""
-    #     for tr in tracks:
-    #         m3u_contents += "#EXTINF\n%s\n" % tr
-    #     return m3u_contents
+    @staticmethod
+    def to_metadata_tags(database_filename, json_directory):
+        easy_dicts = MixxxExporter.tags_from_library(database_filename)
+        easy_dicts = [{
+            **ed,
+            "genre": "".join(ed['crates']),
+            "comment": "".join(ed["playlists"])
+        } for ed in easy_dicts]
+        easy_dicts = drop_keys(easy_dicts, ["id", "playlists", "crates", "location"])
+        return easy_dicts
 
 
+    @staticmethod
+    def make_tag_backup_filename():
+        tag_backup_filename = "track-tags-backup-%s.json" % datetime.now().strftime(
+            "%Y-%m-%dT%H-%M"
+        )
+        return tag_backup_filename
 
-#     @classmethod
-#     def get_all_crates(cls):
-#         return [c[0] for c in cls.query_mixxx("select name from crates;")]
+    @classmethod
+    def export_all_m3us(
+        cls,
+        playlist_save_dir,
+        source_type="crate",
+        overwrite_existing_m3u=False,
+        overridden_track_path=None,
+    ):
+        """
+        `playlist_save_dir` - directory where the m3u playlist file will be saved
+        `track_path` - in the case of moving files, or tracks being on a usb, specify a custom one here.
+        This is primarily useful if switching to and from windows, where the device path will likely be different.#!/usr/bin/env python
+        Relative paths are acceptable.
+        """
+        if not (os.path.exists(playlist_save_dir) and os.path.isdir(playlist_save_dir)):
+            pathlib.Path(playlist_save_dir).mkdir(parents=True, exist_ok=True)
+        print("Exporting Playlists to: %s" % playlist_save_dir)
+        if source_type == "playlist":
+            playlists = MixxxDb.get_all_playlists()
+        else:
+            playlists = MixxxDb.get_all_crates()
+        for pl in playlists:
+            cls.export_m3u(
+                pl,
+                playlist_save_dir,
+                source_type,
+                overwrite_existing_m3u,
+                overridden_track_path,
+            )
 
-#     @classmethod
-#     def get_all_playlists(cls):
-#         """
-#         All Playlists that are not `Auto DJ` or just random session set lists. (only hand crafted playlists)
-#         """
-#         return [
-#             c[0]
-#             for c in cls.query_mixxx(
-#                 "select name from Playlists pl where pl.name not like '202%' and pl.name != 'Auto DJ';"
-#             )
-#         ]
+    @classmethod
+    def export_m3u(
+        cls,
+        playlist_name,
+        playlist_save_dir,
+        source_type="crate",
+        overwrite_existing_m3u=False,
+        overridden_track_path=None,
+    ):
+        """
+        For a given playlist_name (as listed in mixxx) for a given source_type
+        (create or playlist), create an m3u file and save it in
+        playlist_save_dir, optionally overwriting an existing m3u file, with the
+        option to override the track path for each track entry in the m3u file.
+        """
+        m3u_name = os.path.join(playlist_save_dir, playlist_name + ".m3u")
+        print(m3u_name)
+        if not overwrite_existing_m3u and os.path.exists(m3u_name):
+            raise Exception("Playlist file already exists: %s" % m3u_name)
+        if source_type == "playlist":
+            tracks = MixxxDb.get_all_tracks_by_playlist(playlist_name)
+        else:
+            tracks = MixxxDb.get_all_tracks_by_crate(playlist_name)
+        track_filenames = [tr[1] for tr in tracks]
+        m3u_contents = cls._make_m3u_contents(
+            playlist_name, track_filenames, overridden_track_path
+        )
+        with open(m3u_name, "w") as m3u_file:
+            m3u_file.write(m3u_contents)
 
-#     @classmethod
-#     def get_all_tracks_by_crate(cls, crate):
-#         return cls.query_mixxx(
-#             """
-#     select cr.name, tl.location from crates cr
-#     join crate_tracks ct on cr.id = ct.crate_id
-#     left join library l on l.id = ct.track_id
-#     left join track_locations tl on tl.id = l.location
-#     where cr.name = ?
-#     order by cr.name
-#         """,
-#             (crate,),
-#         )
+    @staticmethod
+    def _make_m3u_contents(tracks, overridden_track_path=None):
+        if overridden_track_path:
+            tracks = [
+                os.path.join(overridden_track_path, os.path.basename(tr))
+                for tr in tracks
+            ]
+        m3u_contents = """#EXTM3U\n"""
+        for tr in tracks:
+            m3u_contents += "#EXTINF\n%s\n" % tr
+        return m3u_contents
 
-#     @classmethod
-#     def get_all_tracks_by_playlist(cls, playlist):
-#         return cls.query_mixxx(
-#             """
-#     select pl.name, tl.location, pt.position from Playlists pl
-#     join PlaylistTracks pt on pl.id = pt.playlist_id
-#     left join library l on l.id = pt.track_id
-#     left join track_locations tl on tl.id = l.location
-#     where pl.name = ?
-#     order by pl.name, pt.position
-#         """,
-#             (playlist,),
-#         )
 
-#     @classmethod
-#     def get_all_tracks_grouped_by_crates(cls):
-#         return cls.query_mixxx(
-#             """
-#     select cr.name, tl.location from crates cr
-#     left join crate_tracks ct on cr.id = ct.crate_id
-#     left join library l on l.id = ct.track_id
-#     left join track_locations tl on tl.id = l.location
-#     order by cr.name
-#         """
-#         )
 
-#     @classmethod
-#     def get_all_tracks_grouped_by_playlists(cls):
-#         return cls.query_mixxx(
-#             """
-# select pl.name, tl.location, pt.position from Playlists pl
-# left join PlaylistTracks pt on pl.id = pt.playlist_id
-# left join library l on l.id = pt.track_id
-# left join track_locations tl on tl.id = l.location
-# where pl.name not like '202%' and pl.name != 'Auto DJ'
-# order by pl.name, pt.position;
-#         """
-#         )
+    @classmethod
+    def get_all_crates(cls):
+        return [c[0] for c in cls.query_mixxx("select name from crates;")]
 
-    # @classmethod
-    # def query_mixxx(cls, query, *args):
-    #     return cls.query_db(MIXXX_DB_SQLITE_PATH, query, *args)
+    @classmethod
+    def get_all_playlists(cls):
+        """
+        All Playlists that are not `Auto DJ` or just random session set lists. (only hand crafted playlists)
+        """
+        return [
+            c[0]
+            for c in cls.query_mixxx(
+                "select name from Playlists pl where pl.name not like '202%' and pl.name != 'Auto DJ';"
+            )
+        ]
+
+    @classmethod
+    def get_all_tracks_by_crate(cls, crate):
+        return cls.query_mixxx(
+            """
+    select cr.name, tl.location from crates cr
+    join crate_tracks ct on cr.id = ct.crate_id
+    left join library l on l.id = ct.track_id
+    left join track_locations tl on tl.id = l.location
+    where cr.name = ?
+    order by cr.name
+        """,
+            (crate,),
+        )
+
+    @classmethod
+    def get_all_tracks_by_playlist(cls, playlist):
+        return cls.query_mixxx(
+            """
+    select pl.name, tl.location, pt.position from Playlists pl
+    join PlaylistTracks pt on pl.id = pt.playlist_id
+    left join library l on l.id = pt.track_id
+    left join track_locations tl on tl.id = l.location
+    where pl.name = ?
+    order by pl.name, pt.position
+        """,
+            (playlist,),
+        )
+
+    @classmethod
+    def get_all_tracks_grouped_by_crates(cls):
+        return cls.query_mixxx(
+            """
+    select cr.name, tl.location from crates cr
+    left join crate_tracks ct on cr.id = ct.crate_id
+    left join library l on l.id = ct.track_id
+    left join track_locations tl on tl.id = l.location
+    order by cr.name
+        """
+        )
+
+    @classmethod
+    def get_all_tracks_grouped_by_playlists(cls):
+        return cls.query_mixxx(
+            """
+select pl.name, tl.location, pt.position from Playlists pl
+left join PlaylistTracks pt on pl.id = pt.playlist_id
+left join library l on l.id = pt.track_id
+left join track_locations tl on tl.id = l.location
+where pl.name not like '202%' and pl.name != 'Auto DJ'
+order by pl.name, pt.position;
+        """
+        )
+
+    @classmethod
+    def query_mixxx(cls, query, *args):
+        return cls.query_db(MIXXX_DB_SQLITE_PATH, query, *args)
 
 
 class UnusedFileUtils:

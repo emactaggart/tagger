@@ -8,21 +8,6 @@ def rename_track_locations(database_filename, original, replacement):
     """
     ie, the location, filename, and directory in the `track_locations` table
     """
-    #     def track_location_exists(filename):
-    #         select_query = """
-    # select * from track_locations
-    #         where location = ?
-    #         order by id desc
-    #         limit 1;
-    #         """
-    #         exists = bool(_query_db(
-    #             database_filename,
-    #             select_query,
-    #             (filename,),
-    #         ))
-    #         return exists
-    # exists_before = track_location_exists(original)
-
     rename_query = """
 update track_locations
 set location = :to,
@@ -40,8 +25,39 @@ where location = :from
             "to_directory": os.path.dirname(replacement),
         },
     )
-    # replacement_exists_after = track_location_exists(replacement)
-    # return exists_before and replacement_exists_after
+
+
+def nuke_invalid_metadata(database_filename, filename):
+    """
+    Mixxx does not allow you to reimport bitrate form metadata if it already
+    exists, so we must nuke it in the case where it may have changed behind the
+    scenes.
+    """
+    # for testing
+    # json_filename = "~/Music/Mixing/Util/new-songs.json"
+    # library_path = "~/.mixxx/mixxxdb.sqlite"
+    # replacements, invalid = parse_replacements(
+    #     replacement_dicts=EasyFileUtils.read_json_file(json_filename)
+    # )
+    # for filename_from, filename_to in replacements:
+    #     # mixxx.rename_track_locations(absolute_path(library_path), filename_from, filename_to)
+    #     print(filename_to)
+    #     mixxx.nuke_invalid_metadata(absolute_path(library_path), filename_to)
+    #     # mixxx.nuke_bitrate(database_filename=absolute_path(library_path), filename="/run/media/evan/5B24-5798/Mixing/Core/Tracks/1-01 Cold Spring.flac")
+
+    nuke_query = """
+update library
+set bitrate = Null,
+    duration = Null
+where location = (select id from track_locations where location = :location limit 1)
+        """
+    _query_db(
+        database_filename,
+        nuke_query,
+        {
+            "location": filename,
+        }
+    )
 
 
 def tags_from_library(database_filename):

@@ -1,5 +1,6 @@
 import os
 import shutil
+import sqlite3
 from tagger.core import EasyFileUtils, MetaDataTagUtils
 from tagger import mixxx, serato
 from tagger.utils import absolute_path, keep_keys
@@ -97,7 +98,7 @@ def generate_replacement_json(library_type, library_path, json_filename):
     return json_filename, replacement_data
 
 
-def relocate_files(library_type, library_path, json_filename, replacement_dir):
+def do_relocate_files(library_type, library_path, json_filename, replacement_dir):
     """
     if `replacement_dir` is provided, the files on the system will also be moved, not just relocated in mixxx
     replace_json should be in the form of: [{"from": $FROM$: "to": $TO$}]
@@ -116,25 +117,37 @@ def relocate_files(library_type, library_path, json_filename, replacement_dir):
         return valid, invalid
 
     def relocate_tracks(replacements):
+        failed = []
         for filename_from, filename_to in replacements:
-            mixxx.rename_track_locations(library_path, filename_from, filename_to)
+            try:
+                mixxx.rename_track_locations(absolute_path(library_path), filename_from, filename_to)
+                mixxx.nuke_invalid_metadata(absolute_path(library_path), filename_to)
+            except sqlite3.IntegrityError:
+                # Unique key contrained (usually)
+                failed.append((filename_from, filename_to))
         print(f"Relocated {len(replacements)} files")
+        return failed
 
     def move_files(replacements):
         files_to_replace = [f for f, _ in replacements if os.path.isfile(f)]
         missing_files = [f for f, _ in replacements if not os.path.isfile(f)]
         for f in files_to_replace:
-            shutil.move(f, os.path.join(replacement_dir, os.path.basename(f)))
+            shutil.move(f, os.path.join(absolute_path(replacement_dir), os.path.basename(f)))
         return files_to_replace, missing_files
 
     replacements, invalid = parse_replacements(
         replacement_dicts=EasyFileUtils.read_json_file(json_filename)
     )
+
     print(f"Replacing {len(replacements)} tracks")
     if invalid:
         print(f"Cannot relocated {len(invalid)} tracks as they are invalid: {invalid}")
 
-    relocate_tracks(replacements)
+    failed = relocate_tracks(replacements)
+    if failed:
+        print("Failed to relocated the following due to likely unique key contraints:")
+        for fr,to in failed:
+            print(f"from: {fr}::: to: {to}")
 
     replaced_files, missing_files = move_files(replacements)
     print(f"Moved {len(replaced_files)} files into {replacement_dir}.")
